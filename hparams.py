@@ -17,6 +17,8 @@ encoder_n_convolutions=3
 encoder_embedding_dim=256*2
 pos_embedding=32
 
+# Duration parameters
+duration_kernel_size=5
 
 #############################################
 # Reference Encoder Network Hyperparameters #
@@ -63,7 +65,7 @@ speaker_embedding_size=64
 vae_size=32
 
 # Decoder parameters
-n_frames_per_step=2  # currently only 1 is supported
+n_frames_per_step=1
 decoder_rnn_dim=512*2
 prenet_dims=[128*2, 128*2]
 gate_threshold=0.5
