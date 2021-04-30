@@ -696,7 +696,7 @@ class Decoder(nn.Module):
         cell_input = torch.cat((decoder_input, self.attention_context), -1)
         self.attention_hidden,self.attention_cell = self.attention_rnn(
             cell_input, (self.attention_hidden, self.attention_cell))
-        self.attention_context = self.memory[:, index:index+self.n_frames_per_step, :].mean(dim=1)
+        self.attention_context = self.memory[:, index]
 
         decoder_input = torch.cat((self.attention_hidden, self.attention_context), 1)
         self.decoder_hidden, self.decoder_cell = self.decoder_rnn(
@@ -779,7 +779,7 @@ class Tacotron2(nn.Module):
         self.align = GaussianUpsampling(hparams)
         # self.align = Durian()
         self.decoder = Decoder(hparams)
-        self.postnet = CBHG(hparams)
+        self.postnet = ConvPostnet(hparams)
 
         self.spk_embedding = nn.Embedding(hparams.speaker_classes, hparams.speaker_embedding_size)
         self.expressive_encoder = ExpressiveEncoderNetwork(hparams)
