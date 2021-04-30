@@ -11,7 +11,7 @@ model_type = ["non_attention", "attention"][1]
 
 # Encoder parameters
 num_chars = len(tokens)
-use_skip=True
+use_skip=False
 encoder_kernel_size=5
 encoder_n_convolutions=3
 encoder_embedding_dim=256*2
@@ -74,6 +74,7 @@ p_attention_dropout=0.1
 p_decoder_dropout=0.1
 
 # Attention parameters
+attention_mode=["GMM", "FA"][1]
 attention_rnn_dim=512*2
 attention_dim=256
 
@@ -81,10 +82,14 @@ attention_dim=256
 attention_location_n_filters=32
 attention_location_kernel_size=17
 
+# GMM Attention parameters
+delta_bias=1.0
+sigma_biad=10.0
+gmm_kernel=5
+
 # Mel-post processing network parameters
 postnet_embedding_dims=[512, 512, 512]
 postnet_kernel_sizes=[5, 5, 5]
-postnet_n_convolutions=len(postnet_embedding_dims) + 1
 p_postnet_dropout=0.5
 
 postnet_k=8
@@ -104,7 +109,7 @@ dynamic_loss_scaling=True
 batch_size=32
 learning_rate=1e-3
 weight_decay=1e-6
-training_steps=300_000
+training_steps=250_000
 max_mel_len=1250
 grad_clip_thresh=1.0
 save_checkpoint_every_n_step=10_000
