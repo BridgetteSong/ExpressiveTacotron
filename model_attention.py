@@ -604,7 +604,7 @@ class Decoder(nn.Module):
         if self.attention_mode == "GMM":
             self.mu = memory.new_zeros(B, self.kernel, 1)  # [B, K, 1]
             self.t = torch.arange(MAX_TIME, device=memory.device, dtype=torch.float)
-            self.t = self.t.view(1, 1, MAX_TIME)
+            self.t = self.t.expand(B, self.kernel, MAX_TIME)
         elif self.attention_mode == "FA":
             self.attention_weights_cum = memory.new_zeros(B, MAX_TIME)
             self.log_alpha = memory.new_zeros(B, MAX_TIME).fill_(-float(1e20))
