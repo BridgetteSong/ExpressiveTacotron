@@ -22,15 +22,13 @@ The framework also includes various deep learning architectures such as **Global
 - [x] [ForwardAttention](https://arxiv.org/abs/1807.06736)
 - [x] [DurIAN](https://arxiv.org/abs/1909.01700)
 - [x] [Non-attentive Tacotron](https://arxiv.org/abs/2010.04301)
-- [ ] [GMM Attention](https://arxiv.org/pdf/1910.10288.pdf) (Todo)
+- [x] [GMMv2 Attention](https://arxiv.org/pdf/1910.10288.pdf)
 - [ ] [Dynamic Convolution Attention](https://arxiv.org/pdf/1910.10288.pdf) (Todo)
 
 
 ## Differences
-- ForwardAttention: based on LSA
 - DurIAN: CBHG Encoder is replaced by Tacotron2 Encoder, also supported Skipped Encoder
 - Non-attentive Tacotron: duration stacked convolution layers are concatenated with encoder outputs
-- Default PostNet: CBHG
 
 
 ### Acknowledgements
