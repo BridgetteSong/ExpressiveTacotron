@@ -45,10 +45,10 @@ class Tacotron2Loss(nn.Module):
         return loss
 
     def indices_to_one_hot(self, data, n_classes):
-        targets = np.array(data).reshape(-1)
-        return torch.from_numpy(np.eye(n_classes)[targets]).cuda()
-        # targets = data.contiguous().view(-1)
-        # return torch.eye(targets, device=targets.device)[n_classes]
+        # targets = np.array(data).reshape(-1)
+        # return torch.from_numpy(np.eye(n_classes)[targets]).cuda()
+        targets = data.contiguous().view(-1)
+        return torch.eye(targets, device=targets.device)[n_classes]
 
 
     def KL_loss(self, mu, var):
@@ -81,7 +81,7 @@ class Tacotron2Loss(nn.Module):
 
     def update_lambda(self, iteration):
         iteration += 1
-        if self.update_step % iteration == 0:
+        if iteration % self.update_step == 0:
             self.kl_lambda = self.kl_lambda + self.kl_incr
             self.cat_lambda = self.cat_lambda + self.cat_incr
 
@@ -99,17 +99,12 @@ class Tacotron2Loss(nn.Module):
         else:
             cat_lambda = 0.0
 
-        return min(1, kl_lambda), min(1, cat_lambda)
+        return min(1.0, kl_lambda), min(1.0, cat_lambda)
 
     def log_normal(self, x, mu, var):
         if eps > 0.0:
             var = var + eps
         return -0.5 * torch.sum(np.log(2.0 * np.pi) + torch.log(var) + torch.pow(x - mu, 2) / var, dim=-1)
-
-    def log_normal2(self, x, mu, var):
-        if eps > 0.0:
-            var = var + eps
-        return -0.5 * (np.log(2.0 * np.pi) + torch.log(var) + torch.pow(x - mu, 2) / var)
 
     def entropy(self, logits, targets):
         log_q = F.log_softmax(logits, dim=-1)
@@ -126,7 +121,8 @@ class Tacotron2Loss(nn.Module):
             mel_outputs, mel_outputs_postnet, gate_out, alignments, e_prob = model_output
             gate_out = gate_out.view(-1, 1)
             gate_loss = nn.BCEWithLogitsLoss()(gate_out, gate_target)
-            align_loss = self.guided_attention_loss(alignments)
+            align_loss = 0.0
+            # align_loss = self.guided_attention_loss(alignments)
         # non-attention tacotron losses
         elif self.model_type == "non_attention":
             mel_target = targets
