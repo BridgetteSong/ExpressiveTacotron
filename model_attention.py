@@ -284,10 +284,10 @@ class GMMAttention(nn.Module):
         self.delta_bias = delta_bias
         self.sigma_bias = sigma_bias
         self.query_layer = LinearNorm(query_dim, attention_dim, bias=True, w_init_gain='tanh')
-        self.v = nn.Linear(attention_dim, 3*self.kernel, bias=True)
+        self.v = LinearNorm(attention_dim, 3*self.kernel, bias=True)
         self.score_mask_value = 0.0
-        torch.nn.init.constant_(self.v.bias[(1 * self.kernel):(2 * self.kernel)], self.delta_bias)  # bias mean
-        torch.nn.init.constant_(self.v.bias[(2 * self.kernel):(3 * self.kernel)], self.sigma_bias)  # bias std
+        torch.nn.init.constant_(self.v.linear_layer.bias[(1 * self.kernel):(2 * self.kernel)], self.delta_bias)  # bias mean
+        torch.nn.init.constant_(self.v.linear_layer.bias[(2 * self.kernel):(3 * self.kernel)], self.sigma_bias)  # bias std
 
     def forward(self, query, memory, prev_mu, memory_time, mask=None):
         processed_query = self.v(torch.tanh(self.query_layer(query)))  # [B, 3*K]
@@ -296,7 +296,7 @@ class GMMAttention(nn.Module):
         delta = F.softplus(delta_hat).unsqueeze(2) # [B, k, 1]
         sigma = F.softplus(sigma_hat).unsqueeze(2) # [B, k, 1]
         current_mu = prev_mu + delta
-        z = math.sqrt(2*math.pi) * sigma  # [B, k, 1] sqrt(2*pi) = 2.50662827
+        z = math.sqrt(2*math.pi) * sigma  # [B, k, 1]
         energies = w / z * torch.exp(-0.5 * (memory_time - current_mu)**2 / sigma**2)  # [B, K, N]
         alignments = torch.sum(energies, dim=1)  # [B, N]
         if mask is not None:
@@ -540,7 +540,7 @@ class Decoder(nn.Module):
         self.attention_rnn = nn.LSTMCell(self.prenet_dims[-1] + self.encoder_embedding_dim, self.attention_rnn_dim)
 
         if self.attention_mode == "GMM":
-        	self.kernel = hparams.gmm_kernel
+            self.kernel = hparams.gmm_kernel
             self.attention_layer = GMMAttention(
                 hparams.attention_rnn_dim, hparams.attention_dim,
                 hparams.gmm_kernel, hparams.delta_bias, hparams.sigma_bias)
@@ -549,8 +549,8 @@ class Decoder(nn.Module):
 	            hparams.attention_rnn_dim, self.encoder_embedding_dim,
 	            hparams.attention_dim, hparams.attention_location_n_filters,
 	            hparams.attention_location_kernel_size)
-	    else:
-	    	raise ValueError("unsupported attention mode")
+        else:
+            raise ValueError("unsupported attention mode")
 
         self.decoder_rnn = nn.LSTMCell(self.attention_rnn_dim + self.encoder_embedding_dim, self.decoder_rnn_dim)
         if self.p_attention_dropout > 0:
@@ -611,7 +611,7 @@ class Decoder(nn.Module):
             self.log_alpha[:, 0].fill_(0.)
             self.processed_memory = self.attention_layer.memory_layer(memory)
         else:
-        	raise ValueError("unsupported attention mode")
+            raise ValueError("unsupported attention mode")
 
         self.memory = memory        
         self.mask = mask
@@ -691,7 +691,7 @@ class Decoder(nn.Module):
                 self.attention_hidden, self.memory, self.processed_memory, attention_weights_cat, self.mask, self.log_alpha)
             self.attention_weights_cum += self.attention_weights
         else:
-        	raise ValueError("not supported attention mode")
+            raise ValueError("not supported attention mode")
         
         decoder_input = torch.cat((self.attention_hidden, self.attention_context), 1)
 
