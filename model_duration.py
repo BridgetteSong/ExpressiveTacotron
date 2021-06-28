@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 import torch
 from torch import nn
@@ -500,9 +501,10 @@ class GaussianUpsampling(nn.Module):
 
         range_parameters, _  = self.range_parameter_layer(
             torch.cat((encoder_outputs, processed_durations.transpose(1, 2)), dim=2))
-        range_parameters = F.softplus(self.range_dense(range_parameters))
-        
-        w_t = -torch.pow((t-c)/range_parameters, 2)
+        var = F.softplus(self.range_dense(range_parameters))
+
+#         w_t = -torch.pow((t-c)/var, 2)
+        w_t = -0.5 * (np.log(2.0 * np.pi) + torch.log(var) + torch.pow(t - c, 2) / var)
         if input_lengths is not None:
             input_masks = ~get_mask_from_lengths(input_lengths, N) # [B, N]
             masks = input_masks.unsqueeze(2)
@@ -539,9 +541,10 @@ class GaussianUpsampling(nn.Module):
 
         range_parameters, _  = self.range_parameter_layer(
             torch.cat((encoder_outputs, processed_durations.transpose(1, 2)), dim=2))
-        range_parameters = F.softplus(self.range_dense(range_parameters))
+        var = F.softplus(self.range_dense(range_parameters))
 
-        w_t = -torch.pow((t-c)/range_parameters, 2)
+#         w_t = -torch.pow((t-c)/var, 2)
+        w_t = -0.5 * (np.log(2.0 * np.pi) + torch.log(var) + torch.pow(t - c, 2) / var)
         w_t = F.softmax(w_t, dim=1)
         encoder_upsampling_outputs = torch.bmm(w_t.transpose(1, 2), encoder_outputs)  # [B, T, encoder_hidden_size]
         encoder_upsampling_outputs = torch.cat((encoder_upsampling_outputs, frames_positions), dim=2)
