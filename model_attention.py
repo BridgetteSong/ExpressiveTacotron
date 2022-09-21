@@ -293,15 +293,16 @@ class GMMAttention(nn.Module):
         processed_query = self.v(torch.tanh(self.query_layer(query)))  # [B, 3*K]
         w_hat, delta_hat, sigma_hat = torch.chunk(processed_query, 3, dim=1)
         w = torch.softmax(w_hat, dim=1).unsqueeze(2)  # [B, k, 1]
-        delta = F.softplus(delta_hat).unsqueeze(2) # [B, k, 1]
-        sigma = F.softplus(sigma_hat).unsqueeze(2) # [B, k, 1]
+        delta = F.softplus(delta_hat).unsqueeze(2) + 1e-6 # [B, k, 1]
+        sigma = F.softplus(sigma_hat).unsqueeze(2) + 1e-6 # [B, k, 1]
         current_mu = prev_mu + delta
         z = math.sqrt(2*math.pi) * sigma  # [B, k, 1]
-        energies = w / z * torch.exp(-0.5 * (memory_time - current_mu)**2 / sigma**2)  # [B, K, N]
-        alignments = torch.sum(energies, dim=1)  # [B, N]
+	log_energies = -torch.log(z) - 0.5 * (memory_time - current_mu)**2 / sigma**2  # [B, K, N]
         if mask is not None:
-            alignments.masked_fill_(mask, self.score_mask_value)
-        attention_context = torch.bmm(alignments.unsqueeze(1), memory)
+            log_energies.masked_fill_(mask.unsqueeze(1), -float(1e10))
+	energies = w * F.softmax(log_energies, dim=-1)  # [B, K, N]
+	alignments = torch.sum(energies, dim=1, keepdim=True)  # [B, 1, N]
+        attention_context = torch.bmm(alignments, memory)
         attention_context = attention_context.squeeze(1)
         return attention_context, alignments, current_mu
 
